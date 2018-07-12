@@ -1,19 +1,17 @@
 package com.github.housepower.jdbc.data.type;
 
+import com.github.housepower.jdbc.data.IDataType;
+import com.github.housepower.jdbc.misc.SQLLexer;
+import com.github.housepower.jdbc.misc.Validate;
+import com.github.housepower.jdbc.serializer.BinaryDeserializer;
+import com.github.housepower.jdbc.serializer.BinarySerializer;
+
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
-
-import com.github.housepower.jdbc.misc.Validate;
-import com.github.housepower.jdbc.serializer.BinaryDeserializer;
-import com.github.housepower.jdbc.serializer.BinarySerializer;
-import com.github.housepower.jdbc.data.IDataType;
-import com.github.housepower.jdbc.stream.QuotedLexer;
-import com.github.housepower.jdbc.stream.QuotedToken;
-import com.github.housepower.jdbc.stream.QuotedTokenType;
 
 public class DataTypeDate implements IDataType {
 
@@ -33,6 +31,11 @@ public class DataTypeDate implements IDataType {
     @Override
     public Object defaultValue() {
         return DEFAULT_VALUE;
+    }
+
+    @Override
+    public Class javaTypeClass() {
+        return Date.class;
     }
 
     @Override
@@ -64,20 +67,19 @@ public class DataTypeDate implements IDataType {
     }
 
     @Override
-    public Object deserializeTextQuoted(QuotedLexer lexer) throws SQLException {
-        QuotedToken token = lexer.next();
-        Validate.isTrue(token.type() == QuotedTokenType.StringLiteral, "Expected String Literal.");
-        String dateString = token.data();
+    public Object deserializeTextQuoted(SQLLexer lexer) throws SQLException {
+        Validate.isTrue(lexer.character() == '\'');
+        int year = lexer.numberLiteral().intValue();
+        Validate.isTrue(lexer.character() == '-');
+        int month = lexer.numberLiteral().intValue();
+        Validate.isTrue(lexer.character() == '-');
+        int day = lexer.numberLiteral().intValue();
+        Validate.isTrue(lexer.character() == '\'');
 
-        String[] yearMonthDay = dateString.split("-", 3);
-
-        return new Date(
-            Integer.valueOf(yearMonthDay[0]) - 1900,
-            Integer.valueOf(yearMonthDay[1]) - 1,
-            Integer.valueOf(yearMonthDay[2]));
+        return new Date(year - 1900, month - 1, day);
     }
 
-    public static IDataType createDateType(QuotedLexer lexer, TimeZone serverZone) {
+    public static IDataType createDateType(SQLLexer lexer, TimeZone timeZone) {
         return new DataTypeDate();
     }
 }

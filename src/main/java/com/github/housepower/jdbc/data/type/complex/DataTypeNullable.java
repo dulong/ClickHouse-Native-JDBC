@@ -1,17 +1,15 @@
 package com.github.housepower.jdbc.data.type.complex;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.TimeZone;
-
+import com.github.housepower.jdbc.data.DataTypeFactory;
+import com.github.housepower.jdbc.data.IDataType;
+import com.github.housepower.jdbc.misc.SQLLexer;
 import com.github.housepower.jdbc.misc.Validate;
 import com.github.housepower.jdbc.serializer.BinaryDeserializer;
 import com.github.housepower.jdbc.serializer.BinarySerializer;
-import com.github.housepower.jdbc.data.IDataType;
-import com.github.housepower.jdbc.data.DataTypeFactory;
-import com.github.housepower.jdbc.stream.QuotedLexer;
-import com.github.housepower.jdbc.stream.QuotedToken;
-import com.github.housepower.jdbc.stream.QuotedTokenType;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.TimeZone;
 
 public class DataTypeNullable implements IDataType {
     private static final Byte IS_NULL = 1;
@@ -43,15 +41,19 @@ public class DataTypeNullable implements IDataType {
     }
 
     @Override
-    public Object deserializeTextQuoted(QuotedLexer lexer) throws SQLException {
-        QuotedToken token = lexer.next();
+    public Class javaTypeClass() {
+        return nestedDataType.javaTypeClass();
+    }
 
-        if (token.type() == QuotedTokenType.BareWord) {
-            if (token.data() != null && token.data().equalsIgnoreCase("null")) {
-                return null;
-            }
+    @Override
+    public Object deserializeTextQuoted(SQLLexer lexer) throws SQLException {
+        if (lexer.isCharacter('n') || lexer.isCharacter('N')) {
+            Validate.isTrue(Character.toLowerCase(lexer.character()) == 'n');
+            Validate.isTrue(Character.toLowerCase(lexer.character()) == 'u');
+            Validate.isTrue(Character.toLowerCase(lexer.character()) == 'l');
+            Validate.isTrue(Character.toLowerCase(lexer.character()) == 'l');
+            return null;
         }
-        lexer.prev();
         return nestedDataType.deserializeTextQuoted(lexer);
     }
 
@@ -92,11 +94,11 @@ public class DataTypeNullable implements IDataType {
         return data;
     }
 
-    public static IDataType createNullableType(QuotedLexer lexer, TimeZone serverZone) throws SQLException {
-        Validate.isTrue(lexer.next().type() == QuotedTokenType.OpeningRoundBracket);
-        IDataType nullableNestedType = DataTypeFactory.get(lexer, serverZone);
-        Validate.isTrue(lexer.next().type() == QuotedTokenType.ClosingRoundBracket);
-        return new DataTypeNullable("Nullable(" + nullableNestedType.name() + ")", nullableNestedType
-            , DataTypeFactory.get("UInt8", serverZone));
+    public static IDataType createNullableType(SQLLexer lexer, TimeZone timeZone) throws SQLException {
+        Validate.isTrue(lexer.character() == '(');
+        IDataType nestedType = DataTypeFactory.get(lexer, timeZone);
+        Validate.isTrue(lexer.character() == ')');
+        return new DataTypeNullable(
+            "Nullable(" + nestedType.name() + ")", nestedType, DataTypeFactory.get("UInt8", timeZone));
     }
 }

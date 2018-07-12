@@ -7,42 +7,21 @@ This is a native JDBC library for accessing [ClickHouse](https://clickhouse.yand
 ## Maven central
 
 ```java
-    <dependency>
-	<groupId>com.github.housepower</groupId>
-	<artifactId>clickhouse-native-jdbc</artifactId>
-	<version>1.1-testing</version>
-    </dependency>
+<dependency>
+    <groupId>com.github.housepower</groupId>
+    <artifactId>clickhouse-native-jdbc</artifactId>
+    <version>1.2-stable</version>
+</dependency>
 ```
 
-## Features
+## Difference [Yandex/Clickhouse-JDBC](https://github.com/yandex/clickhouse-jdbc)
+* Data is organized and compressed by columns
+* We implemented it using the TCP Protocol, with higher performance than HTTP
 
-* Uses native ClickHouse tcp client-server protocol, with higher performance than HTTP
-* Compatibility with `java.sql`
-* Data Compression
-
-## Supported queries
-* [x] SELECT
-* [x] INSERT && BATCH INSERT
-* [x] CREATE
-* [x] ALTER
-* [x] DROP
-* [x] RENAME
-
-## Supported data types
-
-* [x] UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64
-* [x] Float32, Float64
-* [x] String
-* [x] FixedString(N)
-* [x] Date
-* [x] DateTime
-* [x] Nullable(T)
-* [x] Tuple
-* [x] Nested
-* [x] Array(T)
-* [x] Enum
-* [x] UUID
-
+## Not Support
+* Non-values format
+* Complex values expression, Like 'INSERT INTO test_table VALUES(toDate(123456))'
+* More compression method, like `ZSTD`
 
 ## Example
 
@@ -86,7 +65,7 @@ Batch insert query, see also [BatchQuery.java](./src/main/java/examples/BatchQue
     stmt.executeQuery("drop table if exists test_jdbc_example");
     stmt.executeQuery("create table test_jdbc_example(day Date, name String, age UInt8) Engine=Log");
 
-    PreparedStatement pstmt = connection.prepareStatement("INSERT INTO test VALUES(?, ?, ?)");
+    PreparedStatement pstmt = connection.prepareStatement("INSERT INTO test_jdbc_example VALUES(?, ?, ?)");
 
     for (int i = 0; i < 200; i++) {
         pstmt.setDate(1, new Date(System.currentTimeMillis()));

@@ -1,16 +1,14 @@
 package com.github.housepower.jdbc.data.type;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.sql.Types;
-
+import com.github.housepower.jdbc.data.IDataType;
+import com.github.housepower.jdbc.misc.SQLLexer;
 import com.github.housepower.jdbc.misc.Validate;
 import com.github.housepower.jdbc.serializer.BinaryDeserializer;
 import com.github.housepower.jdbc.serializer.BinarySerializer;
-import com.github.housepower.jdbc.data.IDataType;
-import com.github.housepower.jdbc.stream.QuotedLexer;
-import com.github.housepower.jdbc.stream.QuotedToken;
-import com.github.housepower.jdbc.stream.QuotedTokenType;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.Types;
 
 public class DataTypeFloat64 implements IDataType {
 
@@ -29,6 +27,11 @@ public class DataTypeFloat64 implements IDataType {
     @Override
     public Object defaultValue() {
         return DEFAULT_VALUE;
+    }
+
+    @Override
+    public Class javaTypeClass() {
+        return Double.class;
     }
 
     @Override
@@ -61,10 +64,8 @@ public class DataTypeFloat64 implements IDataType {
     }
 
     @Override
-    public Object deserializeTextQuoted(QuotedLexer lexer) throws SQLException {
-        QuotedToken token = lexer.next();
-        Validate.isTrue(token.type() == QuotedTokenType.Number, "Expected Number Literal.");
-        return Double.valueOf(token.data());
+    public Object deserializeTextQuoted(SQLLexer lexer) throws SQLException {
+        return lexer.numberLiteral().doubleValue();
     }
 
 }
